@@ -1,0 +1,29 @@
+{
+  "slug": "n8n",
+  "name": "n8n",
+  "description": "Workflow automation tool — open source alternative to Zapier/Make",
+  "logo_url": "https://raw.githubusercontent.com/n8n-io/n8n/master/assets/n8n-logo.png",
+  "image": "n8nio/n8n",
+  "default_tag": "latest",
+  "categories": ["automation", "devtools"],
+  "ports": [
+    { "host": 5678, "container": 5678, "protocol": "tcp", "description": "Web UI" }
+  ],
+  "env_vars": [
+    { "key": "N8N_BASIC_AUTH_ACTIVE", "default": "true", "required": false, "secret": false, "description": "Enable basic authentication" },
+    { "key": "N8N_BASIC_AUTH_USER", "default": "admin", "required": true, "secret": false, "description": "Admin username" },
+    { "key": "N8N_BASIC_AUTH_PASSWORD", "default": "", "required": true, "secret": true, "description": "Admin password (auto-generated if empty)" },
+    { "key": "GENERIC_TIMEZONE", "default": "Europe/Istanbul", "required": false, "secret": false, "description": "Timezone (e.g., Europe/Istanbul, UTC)" },
+    { "key": "N8N_PROTOCOL", "default": "http", "required": false, "secret": false, "description": "Protocol (http or https)" },
+    { "key": "N8N_SECURE_COOKIE", "default": "false", "required": false, "secret": false, "description": "Set to false when behind a reverse proxy (required for domain linking)" }
+  ],
+  "volumes": [
+    { "source": "{{slug}}_data", "target": "/home/node/.n8n", "description": "Persistent workflow data" }
+  ],
+  "min_memory_mb": 256,
+  "is_popular": true,
+  "sort_order": 1,
+  "documentation_url": "https://docs.n8n.io/hosting/installation/docker/",
+  "docker_hub_url": "https://hub.docker.com/r/n8nio/n8n",
+  "website_url": "https://n8n.io"
+}

@@ -1,0 +1,38 @@
+name: Validate templates
+on:
+  pull_request:
+    paths: ["templates/**", "schema/**", "scripts/**"]
+  push:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install jsonschema
+      - run: python3 scripts/validate.py
+      - name: Check images exist on their registry
+        run: |
+          python3 - <<'EOF'
+          import json, sys, urllib.request
+          from pathlib import Path
+          bad = []
+          for f in Path("templates").glob("*.json"):
+              d = json.loads(f.read_text())
+              images = [f'{d["image"]}:{d["default_tag"]}'] + [ls["image"] for ls in d.get("linked_services", [])]
+              for img in images:
+                  ref = img if "/" in img.split(":")[0] else f"library/{img}"
+                  if any(ref.startswith(p) for p in ("ghcr.io/", "quay.io/", "lscr.io/", "public.ecr.aws/", "registry.gitlab.com/")):
+                      continue  # non-Hub registries: checked in review
+                  name, _, tag = ref.partition(":")
+                  url = f"https://hub.docker.com/v2/repositories/{name}/tags/{tag or 'latest'}"
+                  try:
+                      urllib.request.urlopen(url, timeout=15)
+                  except Exception:
+                      bad.append(f"{f.name}: {img} not found on Docker Hub")
+          if bad:
+              print("\n".join(bad)); sys.exit(1)
+          print("all images resolvable")
+          EOF

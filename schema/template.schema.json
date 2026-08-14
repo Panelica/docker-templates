@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Panelica/docker-templates/main/schema/template.schema.json",
+  "title": "Panelica Docker App Template",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slug", "name", "description", "image", "default_tag", "categories", "ports", "env_vars", "volumes", "min_memory_mb"],
+  "properties": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$",
+      "description": "Unique lowercase identifier. Must match the filename: templates/<slug>.json"
+    },
+    "name": { "type": "string", "minLength": 2, "maxLength": 60 },
+    "description": { "type": "string", "minLength": 20, "maxLength": 500 },
+    "logo_url": { "type": "string", "pattern": "^$|^https://", "description": "HTTPS image URL, or empty for the default icon" },
+    "image": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$",
+      "description": "Docker image WITHOUT tag, e.g. 'n8nio/n8n' or 'postgres'"
+    },
+    "default_tag": { "type": "string", "minLength": 1, "description": "Image tag. Prefer a pinned version over 'latest' where the project tags releases." },
+    "categories": {
+      "type": "array", "minItems": 1, "maxItems": 4,
+      "items": { "enum": ["analytics", "automation", "backup", "blog", "cms", "communication", "database", "devtools", "ecommerce", "files", "games", "media", "messaging", "monitoring", "network", "os", "productivity", "security", "support", "web", "wiki"] }
+    },
+    "ports": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["host", "container", "protocol"],
+        "properties": {
+          "host": { "type": "integer", "minimum": 1024, "maximum": 65535, "description": "Suggested host port. Panelica remaps automatically on conflict." },
+          "container": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "protocol": { "enum": ["tcp", "udp"] },
+          "host_ip": { "enum": ["127.0.0.1", "0.0.0.0"], "description": "Bind address. Data services (databases, caches) MUST use 127.0.0.1; the panel asks the user before exposing anything publicly." },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "env_vars": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["key", "default", "required", "secret"],
+        "properties": {
+          "key": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$" },
+          "default": { "type": "string", "description": "Placeholders allowed: {{slug}}, {{server_ip}}, {{domain}}. Leave secrets empty — Panelica auto-generates them." },
+          "required": { "type": "boolean" },
+          "secret": { "type": "boolean", "description": "true = treated as a credential: hidden in UI, auto-generated when default is empty" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "volumes": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source", "target"],
+        "properties": {
+          "source": { "type": "string", "pattern": "^\\{\\{slug\\}\\}[a-z0-9_]*$", "description": "Named volume only, prefixed with {{slug}} (e.g. '{{slug}}_data'). Host paths are not allowed." },
+          "target": { "type": "string", "pattern": "^/" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "linked_services": {
+      "type": "array",
+      "description": "Sidecar containers for multi-container apps (databases, caches, workers). Each runs on the same private network as the main container.",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name_suffix", "image"],
+        "properties": {
+          "name_suffix": { "type": "string", "pattern": "^[a-z0-9-]{1,20}$", "description": "Container is named <slug>-<name_suffix> and is reachable under that hostname from the other containers" },
+          "image": { "type": "string", "description": "Image WITH tag, e.g. 'redis:alpine'" },
+          "env_vars": {
+            "type": "array",
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["key"],
+              "properties": {
+                "key": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$" },
+                "value": { "type": "string", "description": "Literal value" },
+                "from_env": { "type": "string", "description": "Copy the resolved value of this main-container env var (use for shared secrets)" }
+              }
+            }
+          },
+          "volumes": { "$ref": "#/properties/volumes" },
+          "ports": { "$ref": "#/properties/ports" },
+          "command": { "type": "string", "description": "JSON array string or empty, e.g. '[\"sh\", \"-c\", \"...\"]'" }
+        }
+      }
+    },
+    "entrypoint": { "type": "string" },
+    "command": {
+      "type": "array", "items": { "type": "string" },
+      "description": "Container command as an argv array"
+    },
+    "post_deploy_commands": {
+      "type": "array", "items": { "type": "string" },
+      "description": "Commands executed INSIDE the main container after it starts (e.g. a one-time init). Runs with the container's own user."
+    },
+    "restart_policy": { "enum": ["no", "always", "on-failure", "unless-stopped"], "default": "unless-stopped" },
+    "min_memory_mb": { "type": "integer", "minimum": 32, "maximum": 8192 },
+    "cap_add": {
+      "type": "array",
+      "items": { "enum": ["NET_ADMIN", "SYS_NICE"] },
+      "description": "Only the whitelisted capabilities are accepted. Anything else (and 'privileged') is rejected."
+    },
+    "sysctls": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "propertyNames": { "pattern": "^net\\." },
+      "description": "Only net.* sysctls are accepted"
+    },
+    "documentation_url": { "type": "string", "pattern": "^https://" },
+    "docker_hub_url": { "type": "string", "pattern": "^https://" },
+    "website_url": { "type": "string", "pattern": "^https://" },
+    "post_install_notes": { "type": "string", "maxLength": 1000, "description": "Shown to the user after deployment: first-boot duration, where to create the admin account, etc." },
+    "credential_patterns": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["label", "value"],
+        "properties": { "label": { "type": "string" }, "value": { "type": "string" } }
+      },
+      "description": "Access card shown after deploy. Placeholders: {{server_ip}}, {{env:VAR_NAME}} (resolves a generated secret)"
+    },
+    "is_popular": { "type": "boolean", "default": false },
+    "sort_order": { "type": "integer", "minimum": 0, "default": 100 },
+    "contributed_by": { "type": "string", "description": "Your GitHub username — shown as the template credit" }
+  }
+}
