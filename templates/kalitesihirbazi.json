@@ -1,0 +1,168 @@
+{
+  "slug": "kalitesihirbazi",
+  "name": "Kalite Sihirbazı",
+  "description": "ISO 9001, ISO 14001, ISO 45001 Entegre Yönetim Sistemleri (EYS) ve Kalite Süreç Yönetim Platformu",
+  "logo_url": "https://raw.githubusercontent.com/sinan-aydogan/KaliteSihirbazi/main/public/assets/images/default/darkLogo.svg",
+  "image": "sinanaydogan/kalitesihirbazi",
+  "default_tag": "latest",
+  "categories": [
+    "productivity",
+    "web"
+  ],
+  "ports": [
+    {
+      "host": 8000,
+      "container": 8000,
+      "protocol": "tcp",
+      "description": "Web Arayüzü"
+    }
+  ],
+  "env_vars": [
+    {
+      "key": "APP_NAME",
+      "default": "Kalite Sihirbazı",
+      "required": false,
+      "secret": false,
+      "description": "Uygulama Adı"
+    },
+    {
+      "key": "APP_ENV",
+      "default": "production",
+      "required": true,
+      "secret": false,
+      "description": "Uygulama ortamı"
+    },
+    {
+      "key": "APP_KEY",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Uygulama şifreleme anahtarı (Panelica tarafından otomatik üretilir)"
+    },
+    {
+      "key": "APP_DEBUG",
+      "default": "false",
+      "required": false,
+      "secret": false,
+      "description": "Hata ayıklama modu"
+    },
+    {
+      "key": "APP_URL",
+      "default": "http://{{server_ip}}:8000",
+      "required": true,
+      "secret": false,
+      "description": "Uygulama web adresi"
+    },
+    {
+      "key": "DB_CONNECTION",
+      "default": "pgsql",
+      "required": true,
+      "secret": false,
+      "description": "Veritabanı sürücüsü"
+    },
+    {
+      "key": "DB_HOST",
+      "default": "{{slug}}-db",
+      "required": true,
+      "secret": false,
+      "description": "PostgreSQL sunucu adresi (sidecar konteyner)"
+    },
+    {
+      "key": "DB_PORT",
+      "default": "5432",
+      "required": true,
+      "secret": false,
+      "description": "PostgreSQL portu"
+    },
+    {
+      "key": "DB_DATABASE",
+      "default": "kalite_sihirbazi",
+      "required": true,
+      "secret": false,
+      "description": "Veritabanı adı"
+    },
+    {
+      "key": "DB_USERNAME",
+      "default": "postgres",
+      "required": true,
+      "secret": false,
+      "description": "Veritabanı kullanıcı adı"
+    },
+    {
+      "key": "DB_PASSWORD",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Veritabanı şifresi (Panelica tarafından otomatik üretilir)"
+    },
+    {
+      "key": "SESSION_DRIVER",
+      "default": "database",
+      "required": false,
+      "secret": false,
+      "description": "Oturum sürücüsü"
+    },
+    {
+      "key": "QUEUE_CONNECTION",
+      "default": "sync",
+      "required": false,
+      "secret": false,
+      "description": "Kuyruk sürücüsü"
+    }
+  ],
+  "volumes": [
+    {
+      "source": "{{slug}}_storage",
+      "target": "/app/storage",
+      "description": "Kullanıcı yüklemeleri, dökümanlar ve loglar"
+    }
+  ],
+  "linked_services": [
+    {
+      "name_suffix": "db",
+      "image": "postgres:16-alpine",
+      "env_vars": [
+        {
+          "key": "POSTGRES_DB",
+          "value": "kalite_sihirbazi"
+        },
+        {
+          "key": "POSTGRES_USER",
+          "value": "postgres"
+        },
+        {
+          "key": "POSTGRES_PASSWORD",
+          "from_env": "DB_PASSWORD"
+        }
+      ],
+      "volumes": [
+        {
+          "source": "{{slug}}_pgdata",
+          "target": "/var/lib/postgresql/data",
+          "description": "PostgreSQL veritabanı verileri"
+        }
+      ],
+      "ports": [],
+      "command": ""
+    }
+  ],
+  "min_memory_mb": 512,
+  "restart_policy": "unless-stopped",
+  "documentation_url": "https://github.com/sinan-aydogan/KaliteSihirbazi",
+  "docker_hub_url": "https://hub.docker.com/r/sinanaydogan/kalitesihirbazi",
+  "website_url": "https://github.com/sinan-aydogan/KaliteSihirbazi",
+  "post_install_notes": "Kalite Sihirbazı başlatılıyor. İlk açılışta veritabanı tabloları (migration) otomatik olarak oluşturulacaktır (~30 saniye). Web arayüzüne giderek sisteme giriş yapabilirsiniz.",
+  "credential_patterns": [
+    {
+      "label": "Web Paneli",
+      "value": "http://{{server_ip}}:8000"
+    },
+    {
+      "label": "Veritabanı Şifresi",
+      "value": "{{env:DB_PASSWORD}}"
+    }
+  ],
+  "is_popular": false,
+  "sort_order": 100,
+  "contributed_by": "sinanaydogan"
+}
