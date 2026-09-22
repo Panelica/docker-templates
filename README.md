@@ -98,7 +98,8 @@ source of truth (most editors give you autocompletion if you add
 | `credential_patterns` | | The access card shown after deploy. `{{server_ip}}` and `{{env:VAR}}` placeholders resolve at runtime. |
 | `documentation_url`, `docker_hub_url`, `website_url` | | Links on the app card. |
 | `is_popular`, `sort_order` | | Store placement (maintainers may adjust these in review). |
-| `contributed_by` | | Your GitHub username — credited in the panel. |
+| `contributed_by` | | Your GitHub username — credited in the panel. Required for community templates. |
+| `tier` | | Set by maintainers in review: `community` (default — shown with a Community badge and your credit) or `official` (Panelica-maintained). Leave it out when contributing. |
 
 ### Placeholders
 

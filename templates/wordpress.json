@@ -5,31 +5,83 @@
   "logo_url": "https://s.w.org/style/images/about/WordPress-logotype-standard.png",
   "image": "wordpress",
   "default_tag": "latest",
-  "categories": ["cms", "web"],
+  "categories": [
+    "cms",
+    "web"
+  ],
   "ports": [
-    { "host": 8080, "container": 80, "protocol": "tcp", "description": "HTTP Web Interface" }
+    {
+      "host": 8080,
+      "container": 80,
+      "protocol": "tcp",
+      "description": "HTTP Web Interface"
+    }
   ],
   "env_vars": [
-    { "key": "WORDPRESS_DB_HOST", "default": "{{slug}}-db:3306", "required": true, "secret": false, "description": "MySQL database host:port" },
-    { "key": "WORDPRESS_DB_USER", "default": "wordpress", "required": true, "secret": false, "description": "Database username" },
-    { "key": "WORDPRESS_DB_PASSWORD", "default": "", "required": true, "secret": true, "description": "Database password (auto-generated)" },
-    { "key": "WORDPRESS_DB_NAME", "default": "wordpress", "required": true, "secret": false, "description": "Database name" }
+    {
+      "key": "WORDPRESS_DB_HOST",
+      "default": "{{slug}}-db:3306",
+      "required": true,
+      "secret": false,
+      "description": "MySQL database host:port"
+    },
+    {
+      "key": "WORDPRESS_DB_USER",
+      "default": "wordpress",
+      "required": true,
+      "secret": false,
+      "description": "Database username"
+    },
+    {
+      "key": "WORDPRESS_DB_PASSWORD",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Database password (auto-generated)"
+    },
+    {
+      "key": "WORDPRESS_DB_NAME",
+      "default": "wordpress",
+      "required": true,
+      "secret": false,
+      "description": "Database name"
+    }
   ],
   "volumes": [
-    { "source": "{{slug}}_html", "target": "/var/www/html", "description": "WordPress files and uploads" }
+    {
+      "source": "{{slug}}_html",
+      "target": "/var/www/html",
+      "description": "WordPress files and uploads"
+    }
   ],
   "linked_services": [
     {
       "name_suffix": "db",
       "image": "mariadb:11",
       "env_vars": [
-        { "key": "MARIADB_DATABASE", "value": "wordpress" },
-        { "key": "MARIADB_USER", "value": "wordpress" },
-        { "key": "MARIADB_PASSWORD", "from_env": "WORDPRESS_DB_PASSWORD" },
-        { "key": "MARIADB_RANDOM_ROOT_PASSWORD", "value": "1" }
+        {
+          "key": "MARIADB_DATABASE",
+          "value": "wordpress"
+        },
+        {
+          "key": "MARIADB_USER",
+          "value": "wordpress"
+        },
+        {
+          "key": "MARIADB_PASSWORD",
+          "from_env": "WORDPRESS_DB_PASSWORD"
+        },
+        {
+          "key": "MARIADB_RANDOM_ROOT_PASSWORD",
+          "value": "1"
+        }
       ],
       "volumes": [
-        { "source": "{{slug}}_db_data", "target": "/var/lib/mysql", "description": "MariaDB data" }
+        {
+          "source": "{{slug}}_db_data",
+          "target": "/var/lib/mysql",
+          "description": "MariaDB data"
+        }
       ],
       "ports": [],
       "command": ""
@@ -38,12 +90,19 @@
   "min_memory_mb": 512,
   "post_install_notes": "Visit the web UI to run the famous five-minute WordPress install. The bundled MariaDB is private to this stack and not exposed to the network.",
   "credential_patterns": [
-    { "label": "Web URL", "value": "http://{{server_ip}}:8080" },
-    { "label": "DB Password", "value": "{{env:WORDPRESS_DB_PASSWORD}}" }
+    {
+      "label": "Web URL",
+      "value": "http://{{server_ip}}:8080"
+    },
+    {
+      "label": "DB Password",
+      "value": "{{env:WORDPRESS_DB_PASSWORD}}"
+    }
   ],
   "is_popular": true,
   "sort_order": 2,
   "documentation_url": "https://hub.docker.com/_/wordpress",
   "docker_hub_url": "https://hub.docker.com/_/wordpress",
-  "website_url": "https://wordpress.org"
+  "website_url": "https://wordpress.org",
+  "tier": "official"
 }

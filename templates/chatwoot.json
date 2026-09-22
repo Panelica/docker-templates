@@ -5,38 +5,136 @@
   "logo_url": "",
   "image": "chatwoot/chatwoot",
   "default_tag": "latest",
-  "categories": ["messaging", "support", "web"],
+  "categories": [
+    "messaging",
+    "support",
+    "web"
+  ],
   "ports": [
-    { "host": 8160, "container": 3000, "protocol": "tcp", "description": "Web UI / API" }
+    {
+      "host": 8160,
+      "container": 3000,
+      "protocol": "tcp",
+      "description": "Web UI / API"
+    }
   ],
   "env_vars": [
-    { "key": "RAILS_ENV", "default": "production", "required": false, "secret": false, "description": "Rails environment" },
-    { "key": "NODE_ENV", "default": "production", "required": false, "secret": false, "description": "Node.js environment" },
-    { "key": "INSTALLATION_ENV", "default": "docker", "required": false, "secret": false, "description": "Installation method identifier" },
-    { "key": "SECRET_KEY_BASE", "default": "", "required": true, "secret": true, "description": "Rails secret key (auto-generated)" },
-    { "key": "FRONTEND_URL", "default": "http://{{server_ip}}:8160", "required": false, "secret": false, "description": "Public URL of the Chatwoot instance" },
-    { "key": "POSTGRES_HOST", "default": "{{slug}}-db", "required": false, "secret": false, "description": "PostgreSQL hostname" },
-    { "key": "POSTGRES_USERNAME", "default": "postgres", "required": false, "secret": false, "description": "Database username" },
-    { "key": "POSTGRES_PASSWORD", "default": "", "required": true, "secret": true, "description": "Database password (auto-generated)" },
-    { "key": "POSTGRES_DATABASE", "default": "chatwoot_production", "required": false, "secret": false, "description": "Database name" },
-    { "key": "REDIS_URL", "default": "redis://{{slug}}-cache:6379", "required": false, "secret": false, "description": "Redis connection URL" },
-    { "key": "RAILS_MAX_THREADS", "default": "5", "required": false, "secret": false, "description": "Rails thread pool size" },
-    { "key": "RAILS_LOG_TO_STDOUT", "default": "true", "required": false, "secret": false, "description": "Log to stdout for Docker logging" }
+    {
+      "key": "RAILS_ENV",
+      "default": "production",
+      "required": false,
+      "secret": false,
+      "description": "Rails environment"
+    },
+    {
+      "key": "NODE_ENV",
+      "default": "production",
+      "required": false,
+      "secret": false,
+      "description": "Node.js environment"
+    },
+    {
+      "key": "INSTALLATION_ENV",
+      "default": "docker",
+      "required": false,
+      "secret": false,
+      "description": "Installation method identifier"
+    },
+    {
+      "key": "SECRET_KEY_BASE",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Rails secret key (auto-generated)"
+    },
+    {
+      "key": "FRONTEND_URL",
+      "default": "http://{{server_ip}}:8160",
+      "required": false,
+      "secret": false,
+      "description": "Public URL of the Chatwoot instance"
+    },
+    {
+      "key": "POSTGRES_HOST",
+      "default": "{{slug}}-db",
+      "required": false,
+      "secret": false,
+      "description": "PostgreSQL hostname"
+    },
+    {
+      "key": "POSTGRES_USERNAME",
+      "default": "postgres",
+      "required": false,
+      "secret": false,
+      "description": "Database username"
+    },
+    {
+      "key": "POSTGRES_PASSWORD",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Database password (auto-generated)"
+    },
+    {
+      "key": "POSTGRES_DATABASE",
+      "default": "chatwoot_production",
+      "required": false,
+      "secret": false,
+      "description": "Database name"
+    },
+    {
+      "key": "REDIS_URL",
+      "default": "redis://{{slug}}-cache:6379",
+      "required": false,
+      "secret": false,
+      "description": "Redis connection URL"
+    },
+    {
+      "key": "RAILS_MAX_THREADS",
+      "default": "5",
+      "required": false,
+      "secret": false,
+      "description": "Rails thread pool size"
+    },
+    {
+      "key": "RAILS_LOG_TO_STDOUT",
+      "default": "true",
+      "required": false,
+      "secret": false,
+      "description": "Log to stdout for Docker logging"
+    }
   ],
   "volumes": [
-    { "source": "{{slug}}_storage", "target": "/app/storage", "description": "File uploads, attachments, and assets" }
+    {
+      "source": "{{slug}}_storage",
+      "target": "/app/storage",
+      "description": "File uploads, attachments, and assets"
+    }
   ],
   "linked_services": [
     {
       "name_suffix": "db",
       "image": "pgvector/pgvector:pg16",
       "env_vars": [
-        { "key": "POSTGRES_DB", "value": "chatwoot_production" },
-        { "key": "POSTGRES_USER", "value": "postgres" },
-        { "key": "POSTGRES_PASSWORD", "from_env": "POSTGRES_PASSWORD" }
+        {
+          "key": "POSTGRES_DB",
+          "value": "chatwoot_production"
+        },
+        {
+          "key": "POSTGRES_USER",
+          "value": "postgres"
+        },
+        {
+          "key": "POSTGRES_PASSWORD",
+          "from_env": "POSTGRES_PASSWORD"
+        }
       ],
       "volumes": [
-        { "source": "{{slug}}_db_data", "target": "/var/lib/postgresql/data", "description": "PostgreSQL data with pgvector" }
+        {
+          "source": "{{slug}}_db_data",
+          "target": "/var/lib/postgresql/data",
+          "description": "PostgreSQL data with pgvector"
+        }
       ],
       "ports": [],
       "command": ""
@@ -46,7 +144,11 @@
       "image": "redis:alpine",
       "env_vars": [],
       "volumes": [
-        { "source": "{{slug}}_cache_data", "target": "/data", "description": "Redis persistence" }
+        {
+          "source": "{{slug}}_cache_data",
+          "target": "/data",
+          "description": "Redis persistence"
+        }
       ],
       "ports": [],
       "command": ""
@@ -55,26 +157,64 @@
       "name_suffix": "sidekiq",
       "image": "chatwoot/chatwoot",
       "env_vars": [
-        { "key": "RAILS_ENV", "value": "production" },
-        { "key": "NODE_ENV", "value": "production" },
-        { "key": "INSTALLATION_ENV", "value": "docker" },
-        { "key": "POSTGRES_HOST", "from_env": "POSTGRES_HOST" },
-        { "key": "POSTGRES_USERNAME", "from_env": "POSTGRES_USERNAME" },
-        { "key": "POSTGRES_PASSWORD", "from_env": "POSTGRES_PASSWORD" },
-        { "key": "POSTGRES_DATABASE", "from_env": "POSTGRES_DATABASE" },
-        { "key": "REDIS_URL", "from_env": "REDIS_URL" },
-        { "key": "SECRET_KEY_BASE", "from_env": "SECRET_KEY_BASE" },
-        { "key": "RAILS_LOG_TO_STDOUT", "value": "true" }
+        {
+          "key": "RAILS_ENV",
+          "value": "production"
+        },
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "INSTALLATION_ENV",
+          "value": "docker"
+        },
+        {
+          "key": "POSTGRES_HOST",
+          "from_env": "POSTGRES_HOST"
+        },
+        {
+          "key": "POSTGRES_USERNAME",
+          "from_env": "POSTGRES_USERNAME"
+        },
+        {
+          "key": "POSTGRES_PASSWORD",
+          "from_env": "POSTGRES_PASSWORD"
+        },
+        {
+          "key": "POSTGRES_DATABASE",
+          "from_env": "POSTGRES_DATABASE"
+        },
+        {
+          "key": "REDIS_URL",
+          "from_env": "REDIS_URL"
+        },
+        {
+          "key": "SECRET_KEY_BASE",
+          "from_env": "SECRET_KEY_BASE"
+        },
+        {
+          "key": "RAILS_LOG_TO_STDOUT",
+          "value": "true"
+        }
       ],
       "volumes": [
-        { "source": "{{slug}}_storage", "target": "/app/storage", "description": "Shared file storage" }
+        {
+          "source": "{{slug}}_storage",
+          "target": "/app/storage",
+          "description": "Shared file storage"
+        }
       ],
       "ports": [],
       "command": "[\"docker/entrypoints/rails.sh\", \"sh\", \"-c\", \"bundle exec rails db:chatwoot_prepare && bundle exec sidekiq -C config/sidekiq.yml\"]"
     }
   ],
   "entrypoint": "docker/entrypoints/rails.sh",
-  "command": ["sh", "-c", "bundle exec rails db:chatwoot_prepare && bundle exec rails s -p 3000 -b 0.0.0.0"],
+  "command": [
+    "sh",
+    "-c",
+    "bundle exec rails db:chatwoot_prepare && bundle exec rails s -p 3000 -b 0.0.0.0"
+  ],
   "restart_policy": "unless-stopped",
   "min_memory_mb": 1024,
   "documentation_url": "https://www.chatwoot.com/docs/self-hosted",
@@ -82,9 +222,16 @@
   "website_url": "https://www.chatwoot.com/",
   "post_install_notes": "Chatwoot is starting up. Initial setup takes ~2 minutes (database migration runs automatically on first boot). Once ready, visit the web UI to create your admin account. Stack includes: Rails web server, PostgreSQL database (with pgvector), Redis cache, and Sidekiq background worker. Minimum 1GB RAM recommended.",
   "credential_patterns": [
-    { "label": "Web URL", "value": "http://{{server_ip}}:8160" },
-    { "label": "Setup", "value": "Create admin account on first visit" }
+    {
+      "label": "Web URL",
+      "value": "http://{{server_ip}}:8160"
+    },
+    {
+      "label": "Setup",
+      "value": "Create admin account on first visit"
+    }
   ],
   "is_popular": true,
-  "sort_order": 30
+  "sort_order": 30,
+  "tier": "official"
 }

@@ -93,6 +93,13 @@ def lint(name: str, data: dict) -> None:
             if "value" in e and "from_env" in e:
                 err(name, f"linked service '{ls.get('name_suffix')}': env '{e.get('key')}' sets both value and from_env")
 
+    # Provenance: every template is 'community' unless a maintainer marks it 'official'.
+    tier = data.get("tier", "community")
+    if tier == "community" and not data.get("contributed_by"):
+        err(name, "community templates must set 'contributed_by' (your GitHub username)")
+    if tier == "official" and data.get("contributed_by"):
+        err(name, "'official' is reserved for Panelica-maintained templates — leave 'tier' out, maintainers set it in review")
+
     lint_ports(name, data.get("ports"), "ports")
     for ls in data.get("linked_services", []):
         lint_ports(name, ls.get("ports"), f"linked service '{ls.get('name_suffix')}'")

@@ -128,6 +128,7 @@
     },
     "is_popular": { "type": "boolean", "default": false },
     "sort_order": { "type": "integer", "minimum": 0, "default": 100 },
-    "contributed_by": { "type": "string", "description": "Your GitHub username — shown as the template credit" }
+    "contributed_by": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$", "description": "Your GitHub username — shown as the template credit" },
+    "tier": { "enum": ["official", "community"], "description": "Set by maintainers in review. 'community' templates carry a Community badge and the contributor credit in the panel; 'official' is reserved for templates Panelica maintains." }
   }
 }

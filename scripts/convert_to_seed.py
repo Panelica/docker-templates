@@ -64,6 +64,8 @@ def main() -> int:
         "website_url": q(data.get("website_url", "")),
         "post_install_notes": q(data.get("post_install_notes", "")),
         "credential_patterns": jq(data.get("credential_patterns", [])),
+        "tier": q(data.get("tier", "community")),
+        "contributed_by": q(data.get("contributed_by", "")),
         "is_popular": "true" if data.get("is_popular") else "false",
         "sort_order": str(data.get("sort_order", 100)),
     }
