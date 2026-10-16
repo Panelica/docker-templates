@@ -1,0 +1,158 @@
+{
+  "slug": "tailadmin-voice-core",
+  "name": "TailAdmin Voice Core",
+  "description": "Self-hosted AI Voice & Speech Studio — TTS (Piper, XTTS v2, Bark) and STT (Faster-Whisper) with REST API",
+  "image": "sinanaydogan/voice-core-app",
+  "default_tag": "latest",
+  "categories": [
+    "media",
+    "devtools"
+  ],
+  "ports": [
+    {
+      "host": 8000,
+      "container": 8000,
+      "protocol": "tcp",
+      "description": "Web UI & REST API"
+    }
+  ],
+  "env_vars": [
+    {
+      "key": "APP_NAME",
+      "default": "TailAdmin Voice Core",
+      "required": false,
+      "secret": false,
+      "description": "Uygulama Adı"
+    },
+    {
+      "key": "APP_ENV",
+      "default": "production",
+      "required": true,
+      "secret": false,
+      "description": "Uygulama ortamı"
+    },
+    {
+      "key": "APP_KEY",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Uygulama şifreleme anahtarı (Panelica otomatik üretir)"
+    },
+    {
+      "key": "APP_DEBUG",
+      "default": "false",
+      "required": false,
+      "secret": false,
+      "description": "Hata ayıklama modu"
+    },
+    {
+      "key": "APP_URL",
+      "default": "http://{{server_ip}}:8000",
+      "required": true,
+      "secret": false,
+      "description": "Uygulama web adresi"
+    },
+    {
+      "key": "DB_CONNECTION",
+      "default": "sqlite",
+      "required": true,
+      "secret": false,
+      "description": "Veritabanı sürücüsü"
+    },
+    {
+      "key": "QUEUE_CONNECTION",
+      "default": "database",
+      "required": false,
+      "secret": false,
+      "description": "Kuyruk sürücüsü"
+    },
+    {
+      "key": "PYTHON_VOICE_URL",
+      "default": "http://{{slug}}-engine:5001",
+      "required": true,
+      "secret": false,
+      "description": "Python AI ses motoru adresi (sidecar container)"
+    },
+    {
+      "key": "VOICE_CORE_API_KEY",
+      "default": "",
+      "required": false,
+      "secret": true,
+      "description": "REST API güvenlik anahtarı (Panelica otomatik üretir)"
+    }
+  ],
+  "volumes": [
+    {
+      "source": "{{slug}}_data",
+      "target": "/app/data",
+      "description": "AI modelleri, ses profilleri ve üretilen ses dosyaları"
+    },
+    {
+      "source": "{{slug}}_database",
+      "target": "/app/database",
+      "description": "Kalıcı SQLite veritabanı"
+    },
+    {
+      "source": "{{slug}}_storage",
+      "target": "/app/storage",
+      "description": "Uygulama logları ve oturum verileri"
+    }
+  ],
+  "linked_services": [
+    {
+      "name_suffix": "engine",
+      "image": "sinanaydogan/voice-core-engine",
+      "env_vars": [
+        {
+          "key": "USE_GPU",
+          "value": "auto"
+        },
+        {
+          "key": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "key": "HF_HOME",
+          "value": "/app/data/models/.cache/huggingface"
+        },
+        {
+          "key": "TORCH_HOME",
+          "value": "/app/data/models/.cache/torch"
+        }
+      ],
+      "volumes": [
+        {
+          "source": "{{slug}}_data",
+          "target": "/app/data",
+          "description": "Paylaşılan AI modelleri ve ses dosyaları"
+        },
+        {
+          "source": "{{slug}}_engine_logs",
+          "target": "/app/logs",
+          "description": "Python motor logları"
+        }
+      ],
+      "ports": [],
+      "command": ""
+    }
+  ],
+  "min_memory_mb": 2048,
+  "restart_policy": "unless-stopped",
+  "documentation_url": "https://github.com/sinan-aydogan/tailadmin-voice-core",
+  "docker_hub_url": "https://hub.docker.com/r/sinanaydogan/voice-core-app",
+  "website_url": "https://github.com/sinan-aydogan/tailadmin-voice-core",
+  "post_install_notes": "TailAdmin Voice Core ve Python AI motoru başlatılıyor. İlk açılışta temel modeller hazırlanır. Web arayüzüne giderek veya REST API üzerinden ses sentezleme ve transkripsiyon işlemlerini gerçekleştirebilirsiniz.",
+  "credential_patterns": [
+    {
+      "label": "Web Paneli",
+      "value": "http://{{server_ip}}:8000"
+    },
+    {
+      "label": "API Key",
+      "value": "{{env:VOICE_CORE_API_KEY}}"
+    }
+  ],
+  "is_popular": false,
+  "sort_order": 100,
+  "contributed_by": "sinanaydogan"
+}
