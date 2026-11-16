@@ -1,0 +1,594 @@
+{
+  "slug": "chattermate",
+  "name": "ChatterMate",
+  "description": "Open-source AI customer support. An AI agent answers from your website, docs and files, hands over to your team in a shared inbox, and opens tickets. Embeddable chat widget, help center, Shopify order lookups, MCP tools, and WhatsApp, Messenger, Instagram, Telegram, Slack and email channels. Works with OpenAI, Anthropic, Gemini, Groq, Mistral or a local Ollama model.",
+  "logo_url": "https://raw.githubusercontent.com/chattermate/chattermate.chat/main/frontend/public/pwa-512x512.png",
+  "image": "chattermate/frontend",
+  "default_tag": "1.0.31",
+  "categories": [
+    "support",
+    "messaging",
+    "automation"
+  ],
+  "ports": [
+    {
+      "host": 8170,
+      "container": 80,
+      "protocol": "tcp",
+      "description": "Dashboard"
+    }
+  ],
+  "env_vars": [
+    {
+      "key": "FRONTEND_URL",
+      "default": "http://{{server_ip}}:8170",
+      "required": false,
+      "secret": false,
+      "description": "Public URL of the dashboard. Change it when you link a domain."
+    },
+    {
+      "key": "BACKEND_URL",
+      "default": "http://{{server_ip}}:8171",
+      "required": false,
+      "secret": false,
+      "description": "Public URL of the API. The chat widget on your website connects here, so use your API domain once linked."
+    },
+    {
+      "key": "VITE_API_URL",
+      "default": "http://{{server_ip}}:8171/api/v1",
+      "required": false,
+      "secret": false,
+      "description": "API URL the dashboard calls: BACKEND_URL followed by /api/v1"
+    },
+    {
+      "key": "VITE_WS_URL",
+      "default": "ws://{{server_ip}}:8171",
+      "required": false,
+      "secret": false,
+      "description": "Websocket URL for live chat: BACKEND_URL with ws:// (or wss:// for https)"
+    },
+    {
+      "key": "VITE_WIDGET_URL",
+      "default": "http://{{server_ip}}:8171",
+      "required": false,
+      "secret": false,
+      "description": "URL the chat widget is loaded from: same as BACKEND_URL"
+    },
+    {
+      "key": "JWT_SECRET_KEY",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Signs sign-in tokens (auto-generated)"
+    },
+    {
+      "key": "CONVERSATION_SECRET_KEY",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Signs widget conversation tokens (auto-generated)"
+    },
+    {
+      "key": "ENCRYPTION_KEY_SEED",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Seed of the key that encrypts messages and stored credentials (auto-generated). Back it up: changing or losing it makes existing data unreadable."
+    },
+    {
+      "key": "POSTGRES_PASSWORD",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Database password (auto-generated)"
+    },
+    {
+      "key": "ENVIRONMENT",
+      "default": "production",
+      "required": false,
+      "secret": false,
+      "description": "Runtime environment"
+    },
+    {
+      "key": "DB_HOST",
+      "default": "{{slug}}-db",
+      "required": false,
+      "secret": false,
+      "description": "PostgreSQL (pgvector) hostname"
+    },
+    {
+      "key": "BACKEND_HOST",
+      "default": "{{slug}}-backend",
+      "required": false,
+      "secret": false,
+      "description": "Internal hostname of the API container"
+    },
+    {
+      "key": "REDIS_ENABLED",
+      "default": "true",
+      "required": false,
+      "secret": false,
+      "description": "Use Redis for queues, caching and websockets"
+    },
+    {
+      "key": "REDIS_URL",
+      "default": "redis://{{slug}}-cache:6379/0",
+      "required": false,
+      "secret": false,
+      "description": "Redis connection URL"
+    },
+    {
+      "key": "HELP_CENTER_PUBLIC_MODE",
+      "default": "path",
+      "required": false,
+      "secret": false,
+      "description": "Help center URLs: 'path' serves them at BACKEND_URL/help/<name> with no extra DNS"
+    },
+    {
+      "key": "LOG_LEVEL",
+      "default": "info",
+      "required": false,
+      "secret": false,
+      "description": "Log level"
+    },
+    {
+      "key": "NODE_ENV",
+      "default": "production",
+      "required": false,
+      "secret": false,
+      "description": "Dashboard build mode"
+    }
+  ],
+  "volumes": [],
+  "linked_services": [
+    {
+      "name_suffix": "db",
+      "image": "pgvector/pgvector:pg16",
+      "env_vars": [
+        {
+          "key": "POSTGRES_DB",
+          "value": "chattermate"
+        },
+        {
+          "key": "POSTGRES_USER",
+          "value": "postgres"
+        },
+        {
+          "key": "POSTGRES_PASSWORD",
+          "from_env": "POSTGRES_PASSWORD"
+        }
+      ],
+      "volumes": [
+        {
+          "source": "{{slug}}_db_data",
+          "target": "/var/lib/postgresql/data",
+          "description": "PostgreSQL data with pgvector"
+        }
+      ],
+      "ports": [],
+      "command": "[\"postgres\", \"-c\", \"max_connections=200\", \"-c\", \"shared_buffers=256MB\"]"
+    },
+    {
+      "name_suffix": "cache",
+      "image": "redis:7-alpine",
+      "env_vars": [],
+      "volumes": [
+        {
+          "source": "{{slug}}_cache_data",
+          "target": "/data",
+          "description": "Redis persistence"
+        }
+      ],
+      "ports": [],
+      "command": "[\"redis-server\", \"--appendonly\", \"yes\", \"--maxmemory\", \"512mb\", \"--maxmemory-policy\", \"allkeys-lru\"]"
+    },
+    {
+      "name_suffix": "backend",
+      "image": "chattermate/backend:1.0.31",
+      "env_vars": [
+        {
+          "key": "ENVIRONMENT",
+          "from_env": "ENVIRONMENT"
+        },
+        {
+          "key": "FRONTEND_URL",
+          "from_env": "FRONTEND_URL"
+        },
+        {
+          "key": "BACKEND_URL",
+          "from_env": "BACKEND_URL"
+        },
+        {
+          "key": "VITE_WIDGET_URL",
+          "from_env": "VITE_WIDGET_URL"
+        },
+        {
+          "key": "JWT_SECRET_KEY",
+          "from_env": "JWT_SECRET_KEY"
+        },
+        {
+          "key": "CONVERSATION_SECRET_KEY",
+          "from_env": "CONVERSATION_SECRET_KEY"
+        },
+        {
+          "key": "ENCRYPTION_KEY_SEED",
+          "from_env": "ENCRYPTION_KEY_SEED"
+        },
+        {
+          "key": "POSTGRES_PASSWORD",
+          "from_env": "POSTGRES_PASSWORD"
+        },
+        {
+          "key": "DB_HOST",
+          "from_env": "DB_HOST"
+        },
+        {
+          "key": "REDIS_ENABLED",
+          "from_env": "REDIS_ENABLED"
+        },
+        {
+          "key": "REDIS_URL",
+          "from_env": "REDIS_URL"
+        },
+        {
+          "key": "HELP_CENTER_PUBLIC_MODE",
+          "from_env": "HELP_CENTER_PUBLIC_MODE"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "from_env": "LOG_LEVEL"
+        },
+        {
+          "key": "WORKERS",
+          "value": "1"
+        },
+        {
+          "key": "TIMEOUT",
+          "value": "120"
+        },
+        {
+          "key": "HF_HOME",
+          "value": "/app/.cache/huggingface"
+        },
+        {
+          "key": "HF_HUB_CACHE",
+          "value": "/app/.cache/huggingface/hub"
+        },
+        {
+          "key": "HF_HUB_DISABLE_TELEMETRY",
+          "value": "1"
+        },
+        {
+          "key": "EMBEDDING_MAX_WORKERS",
+          "value": "4"
+        },
+        {
+          "key": "KB_MAX_WORKERS",
+          "value": "4"
+        },
+        {
+          "key": "EMBEDDING_SINGLE_THREADED",
+          "value": "true"
+        },
+        {
+          "key": "EMBEDDING_SEQUENTIAL_FALLBACK",
+          "value": "true"
+        }
+      ],
+      "volumes": [
+        {
+          "source": "{{slug}}_uploads",
+          "target": "/app/uploads",
+          "description": "Uploaded files and agent images"
+        },
+        {
+          "source": "{{slug}}_temp",
+          "target": "/app/temp",
+          "description": "Temporary files from knowledge imports"
+        },
+        {
+          "source": "{{slug}}_hf_cache",
+          "target": "/app/.cache/huggingface",
+          "description": "Cached embedding models"
+        }
+      ],
+      "ports": [
+        {
+          "host": 8171,
+          "container": 8000,
+          "protocol": "tcp",
+          "description": "API, live chat websocket and chat widget"
+        }
+      ],
+      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && until nc -z \\\"$DB_HOST\\\" 5432; do sleep 1; done && sed \\\"s/nc -z db 5432/nc -z $DB_HOST 5432/\\\" scripts/start.sh > /tmp/start.sh && exec bash /tmp/start.sh\"]"
+    },
+    {
+      "name_suffix": "knowledge",
+      "image": "chattermate/backend:1.0.31",
+      "env_vars": [
+        {
+          "key": "ENVIRONMENT",
+          "from_env": "ENVIRONMENT"
+        },
+        {
+          "key": "FRONTEND_URL",
+          "from_env": "FRONTEND_URL"
+        },
+        {
+          "key": "BACKEND_URL",
+          "from_env": "BACKEND_URL"
+        },
+        {
+          "key": "VITE_WIDGET_URL",
+          "from_env": "VITE_WIDGET_URL"
+        },
+        {
+          "key": "JWT_SECRET_KEY",
+          "from_env": "JWT_SECRET_KEY"
+        },
+        {
+          "key": "CONVERSATION_SECRET_KEY",
+          "from_env": "CONVERSATION_SECRET_KEY"
+        },
+        {
+          "key": "ENCRYPTION_KEY_SEED",
+          "from_env": "ENCRYPTION_KEY_SEED"
+        },
+        {
+          "key": "POSTGRES_PASSWORD",
+          "from_env": "POSTGRES_PASSWORD"
+        },
+        {
+          "key": "DB_HOST",
+          "from_env": "DB_HOST"
+        },
+        {
+          "key": "REDIS_ENABLED",
+          "from_env": "REDIS_ENABLED"
+        },
+        {
+          "key": "REDIS_URL",
+          "from_env": "REDIS_URL"
+        },
+        {
+          "key": "HELP_CENTER_PUBLIC_MODE",
+          "from_env": "HELP_CENTER_PUBLIC_MODE"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "from_env": "LOG_LEVEL"
+        },
+        {
+          "key": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "key": "HF_HOME",
+          "value": "/app/.cache/huggingface"
+        },
+        {
+          "key": "HF_HUB_CACHE",
+          "value": "/app/.cache/huggingface/hub"
+        },
+        {
+          "key": "HF_HUB_DISABLE_TELEMETRY",
+          "value": "1"
+        },
+        {
+          "key": "EMBEDDING_MAX_WORKERS",
+          "value": "2"
+        },
+        {
+          "key": "KB_MAX_WORKERS",
+          "value": "2"
+        },
+        {
+          "key": "EMBEDDING_SINGLE_THREADED",
+          "value": "true"
+        },
+        {
+          "key": "EMBEDDING_SEQUENTIAL_FALLBACK",
+          "value": "true"
+        }
+      ],
+      "volumes": [
+        {
+          "source": "{{slug}}_uploads",
+          "target": "/app/uploads",
+          "description": "Uploaded files and agent images"
+        },
+        {
+          "source": "{{slug}}_temp",
+          "target": "/app/temp",
+          "description": "Temporary files from knowledge imports"
+        },
+        {
+          "source": "{{slug}}_hf_cache",
+          "target": "/app/.cache/huggingface",
+          "description": "Cached embedding models"
+        }
+      ],
+      "ports": [],
+      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && until nc -z \\\"$DB_HOST\\\" 5432; do sleep 1; done && exec python -m app.workers.knowledge_processor\"]"
+    },
+    {
+      "name_suffix": "tickets",
+      "image": "chattermate/backend:1.0.31",
+      "env_vars": [
+        {
+          "key": "ENVIRONMENT",
+          "from_env": "ENVIRONMENT"
+        },
+        {
+          "key": "FRONTEND_URL",
+          "from_env": "FRONTEND_URL"
+        },
+        {
+          "key": "BACKEND_URL",
+          "from_env": "BACKEND_URL"
+        },
+        {
+          "key": "VITE_WIDGET_URL",
+          "from_env": "VITE_WIDGET_URL"
+        },
+        {
+          "key": "JWT_SECRET_KEY",
+          "from_env": "JWT_SECRET_KEY"
+        },
+        {
+          "key": "CONVERSATION_SECRET_KEY",
+          "from_env": "CONVERSATION_SECRET_KEY"
+        },
+        {
+          "key": "ENCRYPTION_KEY_SEED",
+          "from_env": "ENCRYPTION_KEY_SEED"
+        },
+        {
+          "key": "POSTGRES_PASSWORD",
+          "from_env": "POSTGRES_PASSWORD"
+        },
+        {
+          "key": "DB_HOST",
+          "from_env": "DB_HOST"
+        },
+        {
+          "key": "REDIS_ENABLED",
+          "from_env": "REDIS_ENABLED"
+        },
+        {
+          "key": "REDIS_URL",
+          "from_env": "REDIS_URL"
+        },
+        {
+          "key": "HELP_CENTER_PUBLIC_MODE",
+          "from_env": "HELP_CENTER_PUBLIC_MODE"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "from_env": "LOG_LEVEL"
+        },
+        {
+          "key": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "key": "HF_HOME",
+          "value": "/app/.cache/huggingface"
+        },
+        {
+          "key": "HF_HUB_CACHE",
+          "value": "/app/.cache/huggingface/hub"
+        },
+        {
+          "key": "HF_HUB_DISABLE_TELEMETRY",
+          "value": "1"
+        }
+      ],
+      "volumes": [
+        {
+          "source": "{{slug}}_hf_cache",
+          "target": "/app/.cache/huggingface",
+          "description": "Cached embedding models"
+        }
+      ],
+      "ports": [],
+      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && until nc -z \\\"$DB_HOST\\\" 5432; do sleep 1; done && exec python -m app.workers.ticket_investigator\"]"
+    },
+    {
+      "name_suffix": "crm-sync",
+      "image": "chattermate/backend:1.0.31",
+      "env_vars": [
+        {
+          "key": "ENVIRONMENT",
+          "from_env": "ENVIRONMENT"
+        },
+        {
+          "key": "FRONTEND_URL",
+          "from_env": "FRONTEND_URL"
+        },
+        {
+          "key": "BACKEND_URL",
+          "from_env": "BACKEND_URL"
+        },
+        {
+          "key": "VITE_WIDGET_URL",
+          "from_env": "VITE_WIDGET_URL"
+        },
+        {
+          "key": "JWT_SECRET_KEY",
+          "from_env": "JWT_SECRET_KEY"
+        },
+        {
+          "key": "CONVERSATION_SECRET_KEY",
+          "from_env": "CONVERSATION_SECRET_KEY"
+        },
+        {
+          "key": "ENCRYPTION_KEY_SEED",
+          "from_env": "ENCRYPTION_KEY_SEED"
+        },
+        {
+          "key": "POSTGRES_PASSWORD",
+          "from_env": "POSTGRES_PASSWORD"
+        },
+        {
+          "key": "DB_HOST",
+          "from_env": "DB_HOST"
+        },
+        {
+          "key": "REDIS_ENABLED",
+          "from_env": "REDIS_ENABLED"
+        },
+        {
+          "key": "REDIS_URL",
+          "from_env": "REDIS_URL"
+        },
+        {
+          "key": "HELP_CENTER_PUBLIC_MODE",
+          "from_env": "HELP_CENTER_PUBLIC_MODE"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "from_env": "LOG_LEVEL"
+        },
+        {
+          "key": "PYTHONUNBUFFERED",
+          "value": "1"
+        }
+      ],
+      "volumes": [],
+      "ports": [],
+      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && until nc -z \\\"$DB_HOST\\\" 5432; do sleep 1; done && exec python -m app.workers.crm_sync\"]"
+    }
+  ],
+  "entrypoint": "/docker-entrypoint.sh",
+  "command": [
+    "sh",
+    "-c",
+    "sed -i \"s#http://backend:8000/#http://$BACKEND_HOST:8000/#\" /etc/nginx/conf.d/default.conf && until nslookup \"$BACKEND_HOST\" >/dev/null 2>&1; do sleep 1; done && exec nginx -g 'daemon off;'"
+  ],
+  "restart_policy": "unless-stopped",
+  "min_memory_mb": 2048,
+  "documentation_url": "https://docs.chattermate.chat",
+  "docker_hub_url": "https://hub.docker.com/r/chattermate/backend",
+  "website_url": "https://chattermate.chat",
+  "post_install_notes": "First boot takes 3-5 minutes: the API downloads its embedding model and runs the database migrations. Then open the dashboard: the setup page creates your organization and admin account. Add an AI provider key (or a local Ollama URL) under AI settings, add your website as knowledge, and copy the widget snippet onto your site. The dashboard and the API are two ports; when you link domains, use https and update FRONTEND_URL, BACKEND_URL, VITE_API_URL, VITE_WS_URL (wss://) and VITE_WIDGET_URL to match. Back up ENCRYPTION_KEY_SEED with the database: without it stored messages and credentials can't be decrypted.",
+  "credential_patterns": [
+    {
+      "label": "Dashboard",
+      "value": "http://{{server_ip}}:8170"
+    },
+    {
+      "label": "API / widget URL",
+      "value": "http://{{server_ip}}:8171"
+    },
+    {
+      "label": "Setup",
+      "value": "Create your organization and admin account on first visit"
+    },
+    {
+      "label": "Encryption key seed (back up)",
+      "value": "{{env:ENCRYPTION_KEY_SEED}}"
+    }
+  ],
+  "contributed_by": "chattermate"
+}
