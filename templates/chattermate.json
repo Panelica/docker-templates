@@ -122,7 +122,7 @@
   "linked_services": [
     {
       "name_suffix": "db",
-      "image": "pgvector/pgvector:pg16",
+      "image": "pgvector/pgvector:0.8.7-pg16",
       "env_vars": [
         {
           "key": "POSTGRES_DB",
@@ -145,11 +145,12 @@
         }
       ],
       "ports": [],
-      "command": "[\"postgres\", \"-c\", \"max_connections=200\", \"-c\", \"shared_buffers=256MB\"]"
+      "command": "[\"postgres\", \"-c\", \"max_connections=200\", \"-c\", \"shared_buffers=256MB\"]",
+      "digest": "sha256:484e838076e04939d27d3e176e91c86eea96236126023be8d3059761122e579f"
     },
     {
       "name_suffix": "cache",
-      "image": "redis:7-alpine",
+      "image": "redis:7.4-alpine",
       "env_vars": [],
       "volumes": [
         {
@@ -159,7 +160,8 @@
         }
       ],
       "ports": [],
-      "command": "[\"redis-server\", \"--appendonly\", \"yes\", \"--maxmemory\", \"512mb\", \"--maxmemory-policy\", \"allkeys-lru\"]"
+      "command": "[\"redis-server\", \"--appendonly\", \"yes\", \"--maxmemory\", \"512mb\", \"--maxmemory-policy\", \"allkeys-lru\"]",
+      "digest": "sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe"
     },
     {
       "name_suffix": "backend",
@@ -279,7 +281,8 @@
           "description": "API, live chat websocket and chat widget"
         }
       ],
-      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && export VITE_WIDGET_URL=\\\"${BACKEND_URL%/}\\\" && exec bash scripts/start.sh\"]"
+      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && export VITE_WIDGET_URL=\\\"${BACKEND_URL%/}\\\" && exec bash scripts/start.sh\"]",
+      "digest": "sha256:d4697404fba247ffc0244743101ad3865a0b39d00248151aa45edf2e833b55bc"
     },
     {
       "name_suffix": "knowledge",
@@ -388,7 +391,8 @@
         }
       ],
       "ports": [],
-      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && export VITE_WIDGET_URL=\\\"${BACKEND_URL%/}\\\" && until curl -sf \\\"http://$BACKEND_HOST:8000/health\\\" >/dev/null; do sleep 2; done && exec python -m app.workers.knowledge_processor\"]"
+      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && export VITE_WIDGET_URL=\\\"${BACKEND_URL%/}\\\" && until curl -sf \\\"http://$BACKEND_HOST:8000/health\\\" >/dev/null; do sleep 2; done && exec python -m app.workers.knowledge_processor\"]",
+      "digest": "sha256:d4697404fba247ffc0244743101ad3865a0b39d00248151aa45edf2e833b55bc"
     },
     {
       "name_suffix": "tickets",
@@ -471,7 +475,8 @@
         }
       ],
       "ports": [],
-      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && export VITE_WIDGET_URL=\\\"${BACKEND_URL%/}\\\" && until curl -sf \\\"http://$BACKEND_HOST:8000/health\\\" >/dev/null; do sleep 2; done && exec python -m app.workers.ticket_investigator\"]"
+      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && export VITE_WIDGET_URL=\\\"${BACKEND_URL%/}\\\" && until curl -sf \\\"http://$BACKEND_HOST:8000/health\\\" >/dev/null; do sleep 2; done && exec python -m app.workers.ticket_investigator\"]",
+      "digest": "sha256:d4697404fba247ffc0244743101ad3865a0b39d00248151aa45edf2e833b55bc"
     },
     {
       "name_suffix": "crm-sync",
@@ -536,7 +541,8 @@
       ],
       "volumes": [],
       "ports": [],
-      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && export VITE_WIDGET_URL=\\\"${BACKEND_URL%/}\\\" && until curl -sf \\\"http://$BACKEND_HOST:8000/health\\\" >/dev/null; do sleep 2; done && exec python -m app.workers.crm_sync\"]"
+      "command": "[\"sh\", \"-c\", \"export ENCRYPTION_KEY=\\\"$(python -c 'import base64,hashlib,os;k=base64.urlsafe_b64encode(hashlib.sha256(os.environ[\\\"ENCRYPTION_KEY_SEED\\\"].encode()).digest());print(base64.b64encode(k).decode())')\\\" && export DATABASE_URL=\\\"$(python -c 'import os,urllib.parse as p;print(\\\"postgresql+psycopg://postgres:\\\"+p.quote(os.environ[\\\"POSTGRES_PASSWORD\\\"],safe=\\\"\\\")+\\\"@\\\"+os.environ[\\\"DB_HOST\\\"]+\\\":5432/chattermate\\\")')\\\" && export VITE_WIDGET_URL=\\\"${BACKEND_URL%/}\\\" && until curl -sf \\\"http://$BACKEND_HOST:8000/health\\\" >/dev/null; do sleep 2; done && exec python -m app.workers.crm_sync\"]",
+      "digest": "sha256:d4697404fba247ffc0244743101ad3865a0b39d00248151aa45edf2e833b55bc"
     }
   ],
   "entrypoint": "/bin/sh",
@@ -568,5 +574,7 @@
       "value": "{{env:ENCRYPTION_KEY_SEED}}"
     }
   ],
-  "contributed_by": "chattermate"
+  "tier": "community",
+  "contributed_by": "chattermate",
+  "image_digest": "sha256:98f3d975f3390dfd6eacbcca6a5532ec2cb7bb1eeb6adb7eba854555de729ec7"
 }
