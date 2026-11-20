@@ -4,7 +4,7 @@
   "description": "Workflow automation tool — open source alternative to Zapier/Make",
   "logo_url": "https://raw.githubusercontent.com/n8n-io/n8n/master/assets/n8n-logo.png",
   "image": "n8nio/n8n",
-  "default_tag": "latest",
+  "default_tag": "1.123.99",
   "categories": [
     "automation",
     "devtools"
@@ -19,25 +19,11 @@
   ],
   "env_vars": [
     {
-      "key": "N8N_BASIC_AUTH_ACTIVE",
-      "default": "true",
-      "required": false,
-      "secret": false,
-      "description": "Enable basic authentication"
-    },
-    {
-      "key": "N8N_BASIC_AUTH_USER",
-      "default": "admin",
-      "required": true,
-      "secret": false,
-      "description": "Admin username"
-    },
-    {
-      "key": "N8N_BASIC_AUTH_PASSWORD",
+      "key": "N8N_ENCRYPTION_KEY",
       "default": "",
       "required": true,
       "secret": true,
-      "description": "Admin password (auto-generated if empty)"
+      "description": "Encrypts the credentials n8n stores (auto-generated). Back it up: without this key a restored volume cannot decrypt them."
     },
     {
       "key": "GENERIC_TIMEZONE",
@@ -69,10 +55,26 @@
     }
   ],
   "min_memory_mb": 256,
-  "is_popular": true,
-  "sort_order": 1,
   "documentation_url": "https://docs.n8n.io/hosting/installation/docker/",
   "docker_hub_url": "https://hub.docker.com/r/n8nio/n8n",
   "website_url": "https://n8n.io",
-  "tier": "official"
+  "post_install_notes": "n8n is starting. The first visit to the web UI creates the owner account — do it before anyone else can reach the port. n8n 1.x has no basic authentication; accounts are managed inside the app. Workflows, credentials and the SQLite database live on the data volume, and the credentials on it are encrypted with N8N_ENCRYPTION_KEY, so keep a copy of that key with your backups. When you link a domain, set N8N_PROTOCOL to https and keep N8N_SECURE_COOKIE off only while you reach n8n over plain http.",
+  "credential_patterns": [
+    {
+      "label": "Web URL",
+      "value": "http://{{server_ip}}:5678"
+    },
+    {
+      "label": "Setup",
+      "value": "Create the owner account on first visit"
+    },
+    {
+      "label": "Encryption key (back up)",
+      "value": "{{env:N8N_ENCRYPTION_KEY}}"
+    }
+  ],
+  "is_popular": true,
+  "sort_order": 1,
+  "tier": "official",
+  "image_digest": "sha256:c9dd1bece9723e27b15a9a7cd146521ec597a45b4caea114ef78bd69e0f699e1"
 }
