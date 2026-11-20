@@ -4,7 +4,7 @@
   "description": "Integrated management system (IMS) and quality process platform for ISO 9001, ISO 14001 and ISO 45001: documents, audits, nonconformities, complaints, calibration and training in one place.",
   "logo_url": "https://raw.githubusercontent.com/sinan-aydogan/KaliteSihirbazi/main/public/assets/images/default/darkLogo.svg",
   "image": "sinanaydogan/kalitesihirbazi",
-  "default_tag": "latest",
+  "default_tag": "1.0.0",
   "categories": [
     "productivity",
     "web"
@@ -120,7 +120,7 @@
   "linked_services": [
     {
       "name_suffix": "db",
-      "image": "postgres:16-alpine",
+      "image": "postgres:16.16-alpine",
       "env_vars": [
         {
           "key": "POSTGRES_DB",
@@ -143,7 +143,8 @@
         }
       ],
       "ports": [],
-      "command": ""
+      "command": "",
+      "digest": "sha256:1d5b02d3a9941fbd52437db4107f8c52d6297dac553ca1e5c299ebb3756b4857"
     }
   ],
   "min_memory_mb": 512,
@@ -165,5 +166,6 @@
   "is_popular": false,
   "sort_order": 100,
   "contributed_by": "sinan-aydogan",
-  "tier": "community"
+  "tier": "community",
+  "image_digest": "sha256:4393168e6a0e560b61bf4d0941301243b8f5c00fedbf1e7526a97c043b4cf26b"
 }

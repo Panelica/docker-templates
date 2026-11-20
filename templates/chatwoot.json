@@ -4,7 +4,7 @@
   "description": "Open-source customer engagement platform. Live chat widget, email, Facebook, Instagram, Twitter, WhatsApp, Telegram, Line — all conversations in one inbox. Chatbots, canned responses, team collaboration, knowledge base, and reporting.",
   "logo_url": "",
   "image": "chatwoot/chatwoot",
-  "default_tag": "latest",
+  "default_tag": "v4.20.0-ce",
   "categories": [
     "messaging",
     "support",
@@ -114,7 +114,7 @@
   "linked_services": [
     {
       "name_suffix": "db",
-      "image": "pgvector/pgvector:pg16",
+      "image": "pgvector/pgvector:0.8.7-pg16",
       "env_vars": [
         {
           "key": "POSTGRES_DB",
@@ -137,11 +137,12 @@
         }
       ],
       "ports": [],
-      "command": ""
+      "command": "",
+      "digest": "sha256:484e838076e04939d27d3e176e91c86eea96236126023be8d3059761122e579f"
     },
     {
       "name_suffix": "cache",
-      "image": "redis:alpine",
+      "image": "redis:8.8-alpine",
       "env_vars": [],
       "volumes": [
         {
@@ -151,11 +152,12 @@
         }
       ],
       "ports": [],
-      "command": ""
+      "command": "",
+      "digest": "sha256:1273af45b299d2b8b60d0e400d90aa6c2c5b1794f01d6a7ca60ff3ba6e65efb5"
     },
     {
       "name_suffix": "sidekiq",
-      "image": "chatwoot/chatwoot",
+      "image": "chatwoot/chatwoot:v4.20.0-ce",
       "env_vars": [
         {
           "key": "RAILS_ENV",
@@ -206,7 +208,8 @@
         }
       ],
       "ports": [],
-      "command": "[\"docker/entrypoints/rails.sh\", \"sh\", \"-c\", \"bundle exec rails db:chatwoot_prepare && bundle exec sidekiq -C config/sidekiq.yml\"]"
+      "command": "[\"docker/entrypoints/rails.sh\", \"sh\", \"-c\", \"bundle exec rails db:chatwoot_prepare && bundle exec sidekiq -C config/sidekiq.yml\"]",
+      "digest": "sha256:03cc2004299fec8142481a411906947928678fa0e126beb5248962183593f8be"
     }
   ],
   "entrypoint": "docker/entrypoints/rails.sh",
@@ -233,5 +236,6 @@
   ],
   "is_popular": true,
   "sort_order": 30,
-  "tier": "official"
+  "tier": "official",
+  "image_digest": "sha256:03cc2004299fec8142481a411906947928678fa0e126beb5248962183593f8be"
 }

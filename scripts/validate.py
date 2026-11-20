@@ -22,6 +22,7 @@ SCHEMA = json.loads((ROOT / "schema" / "template.schema.json").read_text())
 ALLOWED_REGISTRY_PREFIXES = ("ghcr.io/", "quay.io/", "lscr.io/", "public.ecr.aws/", "registry.gitlab.com/")
 
 DENIED_ENV_KEYS = {"DOCKER_HOST"}
+DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 # Mount SOURCES are already restricted to named volumes by the schema; targets are
 # container-internal paths, so only genuinely dangerous targets are blocked here.
 SENSITIVE_TARGET_PREFIXES = ("/var/run/docker.sock", "/proc", "/sys/fs/cgroup")
@@ -54,6 +55,16 @@ def lint_ports(name: str, ports: list, where: str) -> None:
             err(name, f"{where}: container port {p.get('container')} is a data service — set \"host_ip\": \"127.0.0.1\" (the panel lets the user expose it explicitly)")
 
 
+def lint_pin(name: str, tag: str, digest, where: str) -> None:
+    """A template pins a readable release tag and the digest it resolved to."""
+    if tag == "latest":
+        err(name, f"{where}: 'latest' moves — pin the release the project tagged")
+    if not digest:
+        err(name, f"{where}: no digest — run scripts/resolve_digests.py --write")
+    elif not DIGEST_RE.match(str(digest)):
+        err(name, f"{where}: digest must look like sha256:<64 hex chars>, got {digest!r}")
+
+
 def lint(name: str, data: dict) -> None:
     # Filename must match slug
     if data.get("slug") and name != f"{data['slug']}.json":
@@ -69,6 +80,21 @@ def lint(name: str, data: dict) -> None:
     if "/" in img and img.split("/")[0].count(".") > 0:  # has a registry host
         if not img.startswith(ALLOWED_REGISTRY_PREFIXES):
             err(name, f"image registry not allowed: {img} (allowed: Docker Hub, {', '.join(ALLOWED_REGISTRY_PREFIXES)})")
+    if "@" in img or ":" in img:
+        err(name, f"image must be the repository alone: {img} (tag goes in default_tag, digest in image_digest)")
+
+    # Pinning. A tag is a moving pointer: whoever can push to the repository
+    # decides later what it means, and the next deployment runs that. So a
+    # template names a release AND the digest it resolved to in review; the
+    # panel pulls repo:tag@digest, which fails loudly if the content moved.
+    lint_pin(name, data.get("default_tag", ""), data.get("image_digest"), "image")
+    for ls in data.get("linked_services", []):
+        ref = ls.get("image", "")
+        where = f"linked service '{ls.get('name_suffix')}'"
+        tag = ref.rpartition(":")[2] if ":" in ref else ""
+        if not tag:
+            err(name, f"{where}: image needs a pinned tag, e.g. 'redis:8.8-alpine'")
+        lint_pin(name, tag, ls.get("digest"), where)
 
     # Volumes: schema already forces {{slug}}-prefixed named volumes; belt & braces
     for v in data.get("volumes", []) + [vv for ls in data.get("linked_services", []) for vv in ls.get("volumes", [])]:

@@ -4,7 +4,7 @@
   "title": "Panelica Docker App Template",
   "type": "object",
   "additionalProperties": false,
-  "required": ["slug", "name", "description", "image", "default_tag", "categories", "ports", "env_vars", "volumes", "min_memory_mb"],
+  "required": ["slug", "name", "description", "image", "default_tag", "image_digest", "categories", "ports", "env_vars", "volumes", "min_memory_mb"],
   "properties": {
     "slug": {
       "type": "string",
@@ -19,7 +19,8 @@
       "pattern": "^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$",
       "description": "Docker image WITHOUT tag, e.g. 'n8nio/n8n' or 'postgres'"
     },
-    "default_tag": { "type": "string", "minLength": 1, "description": "Image tag. Prefer a pinned version over 'latest' where the project tags releases." },
+    "default_tag": { "type": "string", "minLength": 1, "description": "Image tag, a release the project published. 'latest' is not accepted: it moves (scripts/validate.py enforces this)." },
+    "image_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "Digest the tag resolved to when the template was reviewed. The tag is what people read; this is what runs. Fill it with scripts/resolve_digests.py --write." },
     "categories": {
       "type": "array", "minItems": 1, "maxItems": 4,
       "items": { "enum": ["analytics", "automation", "backup", "blog", "cms", "communication", "database", "devtools", "ecommerce", "files", "games", "media", "messaging", "monitoring", "network", "os", "productivity", "security", "support", "web", "wiki"] }
@@ -69,10 +70,11 @@
       "description": "Sidecar containers for multi-container apps (databases, caches, workers). Each runs on the same private network as the main container.",
       "items": {
         "type": "object", "additionalProperties": false,
-        "required": ["name_suffix", "image"],
+        "required": ["name_suffix", "image", "digest"],
         "properties": {
           "name_suffix": { "type": "string", "pattern": "^[a-z0-9-]{1,20}$", "description": "Container is named <slug>-<name_suffix> and is reachable under that hostname from the other containers" },
-          "image": { "type": "string", "description": "Image WITH tag, e.g. 'redis:alpine'" },
+          "image": { "type": "string", "pattern": "^[^\\s@]+:[^\\s:@]+$", "description": "Image WITH a pinned tag, e.g. 'redis:8.8-alpine'. A missing tag or 'latest' is not accepted; the digest goes in its own field." },
+          "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "Digest this image's tag resolved to when the template was reviewed (scripts/resolve_digests.py --write)." },
           "env_vars": {
             "type": "array",
             "items": {

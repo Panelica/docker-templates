@@ -57,7 +57,8 @@ The minimal viable template — a single container with one port and one volume:
   "name": "Uptime Kuma",
   "description": "Self-hosted uptime monitoring with a beautiful status page",
   "image": "louislam/uptime-kuma",
-  "default_tag": "1",
+  "default_tag": "1.23.16",
+  "image_digest": "sha256:… (scripts/resolve_digests.py --write fills this in)",
   "categories": ["monitoring"],
   "ports": [
     { "host": 3001, "container": 3001, "protocol": "tcp", "description": "Web UI" }
@@ -83,7 +84,8 @@ source of truth (most editors give you autocompletion if you add
 |---|---|---|
 | `slug` | ✔ | Unique lowercase id. Must equal the filename. Containers are named after it. |
 | `name`, `description` | ✔ | Shown on the app card in the panel. |
-| `image`, `default_tag` | ✔ | Docker image (without tag) + tag. Prefer a pinned major version (`"16-alpine"`) over `latest` when the project tags releases. |
+| `image`, `default_tag` | ✔ | Docker image (without tag) + the release tag it runs. `latest` is rejected — it moves. |
+| `image_digest` | ✔ | The digest that tag resolved to in review. Run `python3 scripts/resolve_digests.py --write`; the panel deploys `repository:tag@digest`, so what was reviewed is what runs. Linked services carry their own `digest`. |
 | `categories` | ✔ | 1–4 from the fixed list in the schema — powers the store's filter sidebar. |
 | `ports` | ✔ | Suggested host ports. Panelica automatically remaps on conflict, so pick something sensible and don't worry about collisions. Data services must bind `"host_ip": "127.0.0.1"` (see Security rules). |
 | `env_vars` | ✔ | Environment variables the user can edit before deploying. `"secret": true` + empty `default` = Panelica generates a strong random value and shows it in the credentials card. |
@@ -127,16 +129,18 @@ Skeleton of [`templates/chatwoot.json`](templates/chatwoot.json) — a 4-contain
 {
   "slug": "chatwoot",
   "image": "chatwoot/chatwoot",              // main container: the web app
+  "default_tag": "v4.20.0-ce",               // a release, never "latest"
+  "image_digest": "sha256:03cc20…",          // what that tag resolved to in review
   "env_vars": [
     { "key": "POSTGRES_HOST",     "default": "{{slug}}-db" },      // ← sidecar hostname
     { "key": "POSTGRES_PASSWORD", "default": "", "secret": true }, // ← auto-generated once
     { "key": "REDIS_URL",         "default": "redis://{{slug}}-cache:6379" }
   ],
   "linked_services": [
-    { "name_suffix": "db",    "image": "pgvector/pgvector:pg16",
+    { "name_suffix": "db",    "image": "pgvector/pgvector:0.8.7-pg16", "digest": "sha256:484e83…",
       "env_vars": [ { "key": "POSTGRES_PASSWORD", "from_env": "POSTGRES_PASSWORD" } ] },
-    { "name_suffix": "cache", "image": "redis:alpine" },
-    { "name_suffix": "sidekiq", "image": "chatwoot/chatwoot",
+    { "name_suffix": "cache", "image": "redis:8.8-alpine", "digest": "sha256:1273af…" },
+    { "name_suffix": "sidekiq", "image": "chatwoot/chatwoot:v4.20.0-ce", "digest": "sha256:03cc20…",
       "command": "[\"docker/entrypoints/rails.sh\", \"sh\", \"-c\", \"bundle exec sidekiq\"]" }
   ]
 }
@@ -171,7 +175,8 @@ These are hard rules — the linter rejects the PR, and review would too:
 - `min_memory_mb` is honest (check `docker stats` after boot, add headroom).
 - `post_install_notes` answers the first question a user will have.
 - Secrets use auto-generation instead of `changeme`.
-- The tag is a version the project actually maintains.
+- The tag is a version the project actually maintains, and the digest in the
+  file is the one that tag resolves to right now (`scripts/resolve_digests.py`).
 
 ## FAQ
 

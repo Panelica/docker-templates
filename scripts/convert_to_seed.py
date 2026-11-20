@@ -46,6 +46,7 @@ def main() -> int:
         "logo_url": q(data.get("logo_url", "")),
         "image": q(data["image"]),
         "default_tag": q(data["default_tag"]),
+        "image_digest": q(data.get("image_digest", "")),
         "categories": cats,
         "ports": jq(ports),
         "env_vars": jq(data.get("env_vars", [])),

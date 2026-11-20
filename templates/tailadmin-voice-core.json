@@ -133,7 +133,8 @@
         }
       ],
       "ports": [],
-      "command": ""
+      "command": "",
+      "digest": "sha256:c0e2fa69febc2ec371d1f133ea9b0f21dc3863b7a3e60653dda58c55926f6038"
     }
   ],
   "min_memory_mb": 2048,
@@ -155,5 +156,6 @@
   "is_popular": false,
   "sort_order": 100,
   "contributed_by": "sinan-aydogan",
-  "tier": "community"
+  "tier": "community",
+  "image_digest": "sha256:a1b1fa4662f3d9f9b0b94f0f18bc265f867dbd6b1909fe01a8f0cdc6d8462bfc"
 }

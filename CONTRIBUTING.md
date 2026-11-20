@@ -11,7 +11,7 @@ Thank you for helping grow the Panelica app catalog!
 
 ## Review
 
-Every PR is validated by CI (schema + security lint + image existence) and then
+Every PR is validated by CI (schema + security lint + digests still current) and then
 reviewed by a Panelica maintainer. We look at: image trustworthiness, honest memory
 requirements, secret handling, and first-boot experience. Only maintainers merge;
 merged templates ship with the next panel release.
@@ -25,7 +25,23 @@ Before a maintainer merges, the template must clear this bar:
   file (MIT, Apache-2.0, GPL, AGPL, …). "Free to use" without a license is not enough.
 - **Public, versioned image** — hosted on Docker Hub or one of the allowed
   registries, with release tags (`1.2.3`) and `default_tag` pinned to one of them.
-  `latest` is accepted only when the project publishes no tags at all.
+  `latest` is not accepted: it moves, and a template is a promise about what
+  runs on someone else's server.
+- **Pinned by digest as well as by tag.** A tag is a pointer its publisher can
+  move at any time, so every image in a template also carries the digest that
+  tag resolved to when we reviewed it: `image_digest` for the main image, and
+  `digest` on each linked service. Fill them in with
+
+  ```bash
+  python3 scripts/resolve_digests.py --write
+  ```
+
+  and commit the result. The panel deploys `repository:tag@digest`, so a
+  deployment either runs exactly the reviewed content or fails — it never
+  silently runs something else. CI re-resolves every tag on each pull request
+  and push: if a tag has moved, the build stops until a maintainer looks at the
+  change and refreshes the digest on purpose. When you submit a new version of
+  a template, bump the tag and the digest together.
 - **`linux/amd64` required, `linux/arm64` recommended** — Panelica runs on both.
 - **English source text** — `description`, env descriptions and
   `post_install_notes` are written in English; the panel translates them into 31
