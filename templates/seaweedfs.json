@@ -1,0 +1,100 @@
+{
+  "slug": "seaweedfs",
+  "name": "SeaweedFS",
+  "description": "S3-compatible object storage in one container. Buckets and objects over a signed S3 API — a target for Panelica's remote backups, for application uploads, or for anything that speaks S3.",
+  "logo_url": "https://raw.githubusercontent.com/seaweedfs/seaweedfs/master/note/seaweedfs.png",
+  "image": "chrislusf/seaweedfs",
+  "default_tag": "4.54",
+  "categories": [
+    "files",
+    "backup",
+    "devtools"
+  ],
+  "ports": [
+    {
+      "host": 8333,
+      "container": 8333,
+      "protocol": "tcp",
+      "description": "S3 API — signed requests only"
+    },
+    {
+      "host": 9333,
+      "container": 9333,
+      "protocol": "tcp",
+      "host_ip": "127.0.0.1",
+      "description": "Master status page. It has no login, so it stays on localhost; reach it with an SSH tunnel."
+    },
+    {
+      "host": 8888,
+      "container": 8888,
+      "protocol": "tcp",
+      "host_ip": "127.0.0.1",
+      "description": "Filer: file browser and plain HTTP access to the same data. No login either, so localhost only."
+    }
+  ],
+  "env_vars": [
+    {
+      "key": "S3_ACCESS_KEY",
+      "default": "panelica",
+      "required": true,
+      "secret": false,
+      "description": "Access key id your S3 clients use"
+    },
+    {
+      "key": "S3_SECRET_KEY",
+      "default": "",
+      "required": true,
+      "secret": true,
+      "description": "Secret access key (auto-generated). It is the only credential the API accepts — keep a copy."
+    },
+    {
+      "key": "VOLUME_SIZE_LIMIT_MB",
+      "default": "1024",
+      "required": false,
+      "secret": false,
+      "description": "Size a storage volume reaches before the master starts a new one. 1 GB suits a single server; raise it for large data sets."
+    }
+  ],
+  "volumes": [
+    {
+      "source": "{{slug}}_data",
+      "target": "/data",
+      "description": "Buckets, objects and the filer's metadata"
+    }
+  ],
+  "entrypoint": "sh",
+  "command": [
+    "-c",
+    "set -e\nmkdir -p /data\n# One S3 identity, from the credentials the panel generated. Without a\n# config file SeaweedFS answers every unsigned request, so this file is\n# what keeps the endpoint closed.\ncat > /data/.s3-identities.json <<JSON\n{\"identities\":[{\"name\":\"$S3_ACCESS_KEY\",\"credentials\":[{\"accessKey\":\"$S3_ACCESS_KEY\",\"secretKey\":\"$S3_SECRET_KEY\"}],\"actions\":[\"Admin\",\"Read\",\"Write\",\"List\",\"Tagging\"]}]}\nJSON\nchmod 600 /data/.s3-identities.json\nexec weed server -dir=/data -ip=localhost -ip.bind=0.0.0.0 -master.volumeSizeLimitMB=\"$VOLUME_SIZE_LIMIT_MB\" -volume.max=0 -master.raftHashicorp -master.electionTimeout=1s -filer -s3 -s3.port=8333 -s3.config=/data/.s3-identities.json -s3.port.iceberg=0 -s3.port.lance=0\n"
+  ],
+  "restart_policy": "unless-stopped",
+  "min_memory_mb": 512,
+  "documentation_url": "https://github.com/seaweedfs/seaweedfs/wiki/Amazon-S3-API",
+  "docker_hub_url": "https://hub.docker.com/r/chrislusf/seaweedfs",
+  "website_url": "https://github.com/seaweedfs/seaweedfs",
+  "post_install_notes": "The S3 endpoint is http://<server>:8333 and it only answers signed requests — the access key and secret are on the credentials card. Create your first bucket with any S3 client, for example `aws --endpoint-url http://<server>:8333 s3 mb s3://backups`, or point Panelica's remote backup at it (S3-compatible, path-style, region us-east-1).\n\nThe master and filer pages carry no login, so they are published on 127.0.0.1 only; reach them over an SSH tunnel (`ssh -L 9333:127.0.0.1:9333 ...`) when you want to look at volumes or browse files.\n\nAfter a restart the S3 API answers for about six seconds with InternalError while the master elects itself; retry and it is there. Nothing is lost - buckets and objects are on the volume.\n\nEverything lives on the data volume: objects, buckets and the filer's metadata. The secret key is written into /data/.s3-identities.json at every start from the environment, so changing the variable and restarting the container rotates it.",
+  "credential_patterns": [
+    {
+      "label": "S3 endpoint",
+      "value": "http://{{server_ip}}:8333"
+    },
+    {
+      "label": "Access key",
+      "value": "{{env:S3_ACCESS_KEY}}"
+    },
+    {
+      "label": "Secret key",
+      "value": "{{env:S3_SECRET_KEY}}"
+    },
+    {
+      "label": "Region / addressing",
+      "value": "us-east-1, path-style (set 'force path style' in your client)"
+    },
+    {
+      "label": "Master & filer",
+      "value": "http://127.0.0.1:9333 and http://127.0.0.1:8888 — localhost only, no login"
+    }
+  ],
+  "tier": "official",
+  "image_digest": "sha256:4b42c212543a0acd4c0e675215ecdcaf62a186ef98def76c7e12701871222d15"
+}
